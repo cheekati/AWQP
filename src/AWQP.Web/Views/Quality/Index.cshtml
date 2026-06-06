@@ -1,0 +1,20 @@
+@{
+    ViewData["Title"] = "Quality";
+}
+
+<h1 class="h4">Quality Management</h1>
+<div class="row g-3">
+    <div class="col-md-4"><div class="metric-card"><span>NCR Count</span><strong id="qualityNcr">--</strong></div></div>
+    <div class="col-md-4"><div class="metric-card"><span>Open CAPA</span><strong id="qualityCapa">--</strong></div></div>
+    <div class="col-md-4"><div class="metric-card"><span>Inspection Focus</span><strong>Surface / Dimension / Purity</strong></div></div>
+</div>
+<div class="card mt-3">
+    <div class="card-header">Defect Analysis</div>
+    <div class="card-body"><pre id="defectAnalysis" class="mb-0"></pre></div>
+</div>
+
+@section Scripts {
+    <script>
+        $(loadQualityDashboard);
+    </script>
+}

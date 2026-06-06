@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Shipping";
+}
+
+<h1 class="h4">Shipping and Dispatch</h1>
+<div class="row g-3">
+    <div class="col-md-6"><div class="metric-card"><span>Pending Dispatches</span><strong id="shippingPending">--</strong></div></div>
+    <div class="col-md-6"><div class="metric-card"><span>Deliveries Today</span><strong id="shippingDelivered">--</strong></div></div>
+</div>
+<div class="card mt-3">
+    <div class="card-header">Controls</div>
+    <div class="card-body">
+        <ul class="mb-0">
+            <li>Shipping inspection before dispatch approval.</li>
+            <li>Shipment tracking and delivery confirmation.</li>
+            <li>Export documentation linked to packaging and serial records.</li>
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(loadShippingDashboard);
+    </script>
+}
