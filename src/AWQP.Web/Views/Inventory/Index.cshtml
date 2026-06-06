@@ -1,0 +1,22 @@
+@{
+    ViewData["Title"] = "Inventory";
+}
+
+<h1 class="h4">Inventory and Warehouse</h1>
+<div class="row g-3">
+    <div class="col-md-4"><div class="metric-card"><span>Current Stock</span><strong id="currentStock">--</strong></div></div>
+    <div class="col-md-4"><div class="metric-card"><span>Inventory Valuation</span><strong id="inventoryValue">--</strong></div></div>
+    <div class="col-md-4"><div class="metric-card"><span>Below Reorder</span><strong id="belowReorder">--</strong></div></div>
+</div>
+<div class="card mt-3">
+    <div class="card-header">Traceability Controls</div>
+    <div class="card-body">
+        <p class="mb-0">Inventory is tracked by item, warehouse location, batch, lot, barcode, and QR code.</p>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(loadInventoryDashboard);
+    </script>
+}

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>AWQP.Domain</AssemblyName>
+    <RootNamespace>AWQP.Domain</RootNamespace>
+  </PropertyGroup>
+</Project>

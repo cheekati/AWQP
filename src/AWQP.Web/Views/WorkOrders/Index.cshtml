@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Production";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">MES Work Orders</h1>
+    <span class="badge text-bg-info">Raw Material -> Dispatch</span>
+</div>
+
+<div class="card">
+    <div class="card-header">Open Work Orders</div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+            <tr><th>WO</th><th>Batch</th><th>Lot</th><th>Planned</th><th>Produced</th><th>Rejected</th><th>Yield</th><th>Status</th></tr>
+            </thead>
+            <tbody id="workOrdersTable"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="workflow mt-4">
+    <div>Raw Material</div><div>Quartz Processing</div><div>Forming</div><div>Firing</div><div>Inspection</div>
+    <div>Clean Room Entry</div><div>Final Cleaning</div><div>Vacuum Packaging</div><div>Shipping Inspection</div><div>Dispatch</div>
+</div>
+
+@section Scripts {
+    <script>
+        $(loadWorkOrders);
+    </script>
+}

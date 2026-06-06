@@ -1,0 +1,53 @@
+@{
+    ViewData["Title"] = "Dashboards";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-1">Semiconductor Quartz Manufacturing Dashboard</h1>
+        <p class="text-muted mb-0">Production, quality, inventory, clean-room, and shipping performance.</p>
+    </div>
+    <button class="btn btn-outline-primary" id="refreshDashboards">Refresh</button>
+</div>
+
+<div class="row g-3">
+    <div class="col-xl-3 col-md-6"><div class="metric-card"><span>Daily Production</span><strong id="dailyProduction">--</strong></div></div>
+    <div class="col-xl-3 col-md-6"><div class="metric-card"><span>Yield %</span><strong id="yieldPercent">--</strong></div></div>
+    <div class="col-xl-3 col-md-6"><div class="metric-card"><span>Open NCR</span><strong id="ncrCount">--</strong></div></div>
+    <div class="col-xl-3 col-md-6"><div class="metric-card"><span>Clean Room Compliance</span><strong id="cleanRoomCompliance">--</strong></div></div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Clean Room Telemetry</div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col"><span class="text-muted">Temperature</span><h4 id="temperature">--</h4></div>
+                    <div class="col"><span class="text-muted">Humidity</span><h4 id="humidity">--</h4></div>
+                    <div class="col"><span class="text-muted">Max Particles</span><h4 id="particles">--</h4></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Shipping</div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col"><span class="text-muted">Pending Dispatches</span><h4 id="pendingDispatches">--</h4></div>
+                    <div class="col"><span class="text-muted">Deliveries Today</span><h4 id="deliveriesToday">--</h4></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            loadDashboards();
+            $("#refreshDashboards").on("click", loadDashboards);
+        });
+    </script>
+}

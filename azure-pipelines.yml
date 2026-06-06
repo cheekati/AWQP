@@ -1,0 +1,90 @@
+trigger:
+  branches:
+    include:
+      - main
+      - cursor/*
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: Release
+  dotnetVersion: 8.0.x
+  imageRepositoryApi: awqp-api
+  imageRepositoryWeb: awqp-web
+
+stages:
+  - stage: BuildAndTest
+    displayName: Build and test
+    jobs:
+      - job: Build
+        steps:
+          - task: UseDotNet@2
+            inputs:
+              packageType: sdk
+              version: $(dotnetVersion)
+
+          - script: dotnet restore AWQP.sln
+            displayName: Restore
+
+          - script: dotnet build AWQP.sln --configuration $(buildConfiguration) --no-restore
+            displayName: Build
+
+          - script: dotnet test AWQP.sln --configuration $(buildConfiguration) --no-build --logger trx
+            displayName: Test
+            continueOnError: true
+
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: VSTest
+              testResultsFiles: '**/*.trx'
+
+          - script: |
+              dotnet publish src/AWQP.Api/AWQP.Api.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/api
+              dotnet publish src/AWQP.Web/AWQP.Web.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/web
+            displayName: Publish apps
+
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: drop
+
+  - stage: Containerize
+    displayName: Build container images
+    dependsOn: BuildAndTest
+    condition: succeeded()
+    jobs:
+      - job: Docker
+        steps:
+          - task: Docker@2
+            displayName: Build API image
+            inputs:
+              command: build
+              Dockerfile: src/AWQP.Api/Dockerfile
+              repository: $(imageRepositoryApi)
+              tags: |
+                $(Build.BuildId)
+
+          - task: Docker@2
+            displayName: Build Web image
+            inputs:
+              command: build
+              Dockerfile: src/AWQP.Web/Dockerfile
+              repository: $(imageRepositoryWeb)
+              tags: |
+                $(Build.BuildId)
+
+  - stage: Deploy
+    displayName: Deploy
+    dependsOn: Containerize
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployToEnvironment
+        environment: awqp-production
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: drop
+                - script: echo "Deploy API/Web artifacts or container images to the target Azure environment."
+                  displayName: Deployment placeholder

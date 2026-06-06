@@ -1,0 +1,50 @@
+:root {
+    --awqp-blue: #0d6efd;
+    --awqp-dark: #19324a;
+    --awqp-soft: #f3f7fb;
+}
+
+body {
+    background: var(--awqp-soft);
+}
+
+.metric-card {
+    background: #fff;
+    border: 1px solid rgba(25, 50, 74, .08);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(25, 50, 74, .06);
+}
+
+.metric-card span {
+    display: block;
+    color: #667085;
+    font-size: .85rem;
+    margin-bottom: .35rem;
+}
+
+.metric-card strong {
+    color: var(--awqp-dark);
+    font-size: 1.75rem;
+}
+
+.workflow {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(120px, 1fr));
+    gap: .75rem;
+}
+
+.workflow div {
+    background: #fff;
+    border-left: 4px solid var(--awqp-blue);
+    border-radius: .75rem;
+    padding: .85rem;
+    font-weight: 600;
+    box-shadow: 0 0.25rem 1rem rgba(25, 50, 74, .05);
+}
+
+@media (max-width: 992px) {
+    .workflow {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+    }
+}
