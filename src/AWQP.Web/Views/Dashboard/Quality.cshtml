@@ -1,0 +1,24 @@
+@{
+    ViewData["Title"] = "Quality Dashboard";
+}
+<section class="hero-panel mb-4">
+    <div>
+        <p class="text-uppercase text-muted mb-1">Semiconductor Quartz Manufacturing</p>
+        <h1 class="display-6 fw-bold">Quality Dashboard</h1>
+        <p class="mb-0">Enterprise ERP/MES visibility for high-purity quartz production, quality, inventory, clean room, and shipping operations.</p>
+    </div>
+</section>
+<div class="row g-3" data-dashboard="quality">
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><span class="metric-label">Daily Production</span><strong id="metric-production">--</strong><small>operations</small></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><span class="metric-label">Yield</span><strong id="metric-yield">--</strong><small>%</small></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><span class="metric-label">Clean Room</span><strong id="metric-cleanroom">--</strong><small>exceptions</small></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><span class="metric-label">Pending Dispatch</span><strong id="metric-shipping">--</strong><small>shipments</small></div></div></div>
+</div>
+<div class="card mt-4">
+    <div class="card-header fw-semibold">Workflow Monitor</div>
+    <div class="card-body">
+        <div class="workflow">
+            <span>Raw Material</span><span>Quartz Processing</span><span>Forming</span><span>Firing</span><span>Inspection</span><span>Clean Room</span><span>Final Cleaning</span><span>Vacuum Packaging</span><span>Shipping Inspection</span><span>Dispatch</span>
+        </div>
+    </div>
+</div>

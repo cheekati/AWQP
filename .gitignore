@@ -1,0 +1,18 @@
+# Build outputs
+bin/
+obj/
+TestResults/
+*.user
+*.suo
+.vs/
+
+# Logs and local config
+logs/
+*.log
+.env
+appsettings.Development.local.json
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
