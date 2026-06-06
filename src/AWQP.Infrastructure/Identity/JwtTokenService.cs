@@ -57,7 +57,7 @@ public sealed class JwtTokenService(
     {
         var roles = await userManager.GetRolesAsync(user);
         var now = DateTimeOffset.UtcNow;
-        var expires = now.AddMinutes(configuration.GetValue("Jwt:AccessTokenMinutes", 30));
+        var expires = now.AddMinutes(GetInt("Jwt:AccessTokenMinutes", 30));
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:SigningKey"]!));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var claims = new List<Claim>
@@ -84,7 +84,7 @@ public sealed class JwtTokenService(
         {
             UserId = user.Id,
             TokenHash = Hash(refreshToken),
-            ExpiresAt = now.AddDays(configuration.GetValue("Jwt:RefreshTokenDays", 7))
+            ExpiresAt = now.AddDays(GetInt("Jwt:RefreshTokenDays", 7))
         });
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -110,5 +110,10 @@ public sealed class JwtTokenService(
     private static string Hash(string value)
     {
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
+    }
+
+    private int GetInt(string key, int fallback)
+    {
+        return int.TryParse(configuration[key], out var value) ? value : fallback;
     }
 }

@@ -187,8 +187,8 @@ public sealed class AwqpDbContext(DbContextOptions<AwqpDbContext> options, ICurr
                 entry.Entity.ModifiedBy = user;
             }
 
-            var oldValues = entry.State == EntityState.Added ? null : entry.OriginalValues.Properties.ToDictionary(p => p.Name, p => entry.OriginalValues[p]);
-            var newValues = entry.State == EntityState.Deleted ? null : entry.CurrentValues.Properties.ToDictionary(p => p.Name, p => entry.CurrentValues[p]);
+            var oldValues = entry.State == EntityState.Added ? null : entry.OriginalValues.Properties.ToDictionary(p => p.Name, p => entry.OriginalValues[p.Name]);
+            var newValues = entry.State == EntityState.Deleted ? null : entry.CurrentValues.Properties.ToDictionary(p => p.Name, p => entry.CurrentValues[p.Name]);
             audits.Add(new AuditLog
             {
                 EntityName = entry.Entity.GetType().Name,
