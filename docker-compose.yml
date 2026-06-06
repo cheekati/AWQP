@@ -1,0 +1,35 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Your_password123"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__ManufacturingDb: Server=sqlserver,1433;Database=AWQP_Manufacturing;User Id=sa;Password=Your_password123;TrustServerCertificate=True
+      Jwt__SigningKey: replace-this-development-key-with-key-vault-secret-32chars-min
+    ports:
+      - "7001:8080"
+    depends_on:
+      - sqlserver
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ApiBaseUrl: http://api:8080
+    ports:
+      - "7002:8080"
+    depends_on:
+      - api
+volumes:
+  sql_data:
