@@ -3,7 +3,7 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "Your_password123"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Change_this_SQL_password_123!}"
     ports:
       - "1433:1433"
     volumes:
@@ -14,7 +14,7 @@ services:
       dockerfile: Dockerfile.api
     environment:
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__ManufacturingDb: Server=sqlserver,1433;Database=AWQP_Manufacturing;User Id=sa;Password=Your_password123;TrustServerCertificate=True
+      ConnectionStrings__ManufacturingDb: "Server=sqlserver,1433;Database=AWQP_Manufacturing;User Id=sa;Password=${MSSQL_SA_PASSWORD:-Change_this_SQL_password_123!};TrustServerCertificate=True"
       Jwt__SigningKey: replace-this-development-key-with-key-vault-secret-32chars-min
     ports:
       - "7001:8080"
