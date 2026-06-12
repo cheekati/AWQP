@@ -19,6 +19,15 @@
                 <li class="nav-item"><a class="nav-link" asp-controller="Dashboard" asp-action="Inventory">Inventory</a></li>
                 <li class="nav-item"><a class="nav-link" asp-controller="Dashboard" asp-action="CleanRoom">Clean Room</a></li>
                 <li class="nav-item"><a class="nav-link" asp-controller="Dashboard" asp-action="Shipping">Shipping</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">EHS / PPE</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" asp-controller="Ppe" asp-action="Master">PPE Master</a></li>
+                        <li><a class="dropdown-item" asp-controller="Ppe" asp-action="Request">PPE Request</a></li>
+                        <li><a class="dropdown-item" asp-controller="Ppe" asp-action="Issue">PPE Issue</a></li>
+                        <li><a class="dropdown-item" asp-controller="Ppe" asp-action="Inventory">PPE Inventory</a></li>
+                    </ul>
+                </li>
             </ul>
         </div>
     </div>

@@ -4,6 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog((context, logger) => logger.ReadFrom.Configuration(context.Configuration).WriteTo.Console());
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+builder.Services.AddSingleton<AWQP.Web.Services.ApiTokenProvider>();
 builder.Services.AddHttpClient("api", client => client.BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "https://localhost:7001"));
 
 var app = builder.Build();

@@ -56,6 +56,11 @@ public sealed class ManufacturingDbContext : DbContext
     public DbSet<Shipment> Shipments => Set<Shipment>();
     public DbSet<ShipmentLine> ShipmentLines => Set<ShipmentLine>();
     public DbSet<ManagedDocument> ManagedDocuments => Set<ManagedDocument>();
+    public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<PpeItem> PpeItems => Set<PpeItem>();
+    public DbSet<PpeRequest> PpeRequests => Set<PpeRequest>();
+    public DbSet<PpeIssue> PpeIssues => Set<PpeIssue>();
+    public DbSet<PpeStockEntry> PpeStockEntries => Set<PpeStockEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -136,6 +141,12 @@ public sealed class ManufacturingDbContext : DbContext
         modelBuilder.Entity<Shipment>().ToTable("Shipments", "shipping");
         modelBuilder.Entity<ShipmentLine>().ToTable("ShipmentLines", "shipping");
         modelBuilder.Entity<ManagedDocument>().ToTable("ManagedDocuments", "docs");
+
+        modelBuilder.Entity<Employee>().ToTable("Employees", "ehs");
+        modelBuilder.Entity<PpeItem>().ToTable("PpeItems", "ehs");
+        modelBuilder.Entity<PpeRequest>().ToTable("PpeRequests", "ehs");
+        modelBuilder.Entity<PpeIssue>().ToTable("PpeIssues", "ehs");
+        modelBuilder.Entity<PpeStockEntry>().ToTable("PpeStockEntries", "ehs");
     }
 
     private static System.Linq.Expressions.LambdaExpression ConvertFilterExpression(Type entityType)
