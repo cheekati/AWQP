@@ -1,0 +1,6 @@
+@ChangeManagement.API_HostAddress = http://localhost:5264
+
+GET {{ChangeManagement.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
