@@ -1,0 +1,19 @@
+# .NET
+**/bin/
+**/obj/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+backend/ChangeManagement.Api/wwwroot/uploads/*
+!backend/ChangeManagement.Api/wwwroot/uploads/.gitkeep
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# IDE / OS
+.vs/
+.idea/
+*.user
+.DS_Store
+*.log
