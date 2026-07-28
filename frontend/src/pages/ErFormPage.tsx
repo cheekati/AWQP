@@ -179,6 +179,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               Division
               <select
+                data-testid="division"
                 value={form.division}
                 onChange={(e) => set('division', Number(e.target.value))}
                 required
@@ -193,6 +194,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               Title
               <input
+                data-testid="title"
                 value={form.title}
                 onChange={(e) => set('title', e.target.value)}
                 required
@@ -202,6 +204,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               Department
               <select
+                data-testid="department"
                 value={form.department}
                 onChange={(e) => set('department', e.target.value)}
                 required
@@ -216,7 +219,12 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             </label>
             <label>
               Product
-              <select value={form.product} onChange={(e) => set('product', e.target.value)} required>
+              <select
+                data-testid="product"
+                value={form.product}
+                onChange={(e) => set('product', e.target.value)}
+                required
+              >
                 <option value="">Select…</option>
                 {products.map((p) => (
                   <option key={p} value={p}>
@@ -227,11 +235,19 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             </label>
             <label>
               Customer
-              <input value={form.customer} onChange={(e) => set('customer', e.target.value)} />
+              <input
+                data-testid="customer"
+                value={form.customer}
+                onChange={(e) => set('customer', e.target.value)}
+              />
             </label>
             <label>
               Process
-              <input value={form.process} onChange={(e) => set('process', e.target.value)} />
+              <input
+                data-testid="process"
+                value={form.process}
+                onChange={(e) => set('process', e.target.value)}
+              />
             </label>
           </div>
         </fieldset>
@@ -242,6 +258,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <span>Reason for Change</span>
             <label className="check">
               <input
+                data-testid="reason-cost-down"
                 type="checkbox"
                 checked={form.reasonCostDown}
                 onChange={(e) => set('reasonCostDown', e.target.checked)}
@@ -250,6 +267,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             </label>
             <label className="check">
               <input
+                data-testid="reason-alt-sourcing"
                 type="checkbox"
                 checked={form.reasonAlternativeSourcing}
                 onChange={(e) => set('reasonAlternativeSourcing', e.target.checked)}
@@ -258,6 +276,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             </label>
             <label className="check">
               <input
+                data-testid="reason-others"
                 type="checkbox"
                 checked={form.reasonOthers}
                 onChange={(e) => set('reasonOthers', e.target.checked)}
@@ -278,6 +297,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               Present
               <textarea
+                data-testid="present"
                 rows={4}
                 value={form.presentDetails}
                 onChange={(e) => set('presentDetails', e.target.value)}
@@ -286,6 +306,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               New
               <textarea
+                data-testid="new-details"
                 rows={4}
                 value={form.newDetails}
                 onChange={(e) => set('newDetails', e.target.value)}
@@ -293,11 +314,17 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             </label>
             <label>
               Merit
-              <textarea rows={3} value={form.merit} onChange={(e) => set('merit', e.target.value)} />
+              <textarea
+                data-testid="merit"
+                rows={3}
+                value={form.merit}
+                onChange={(e) => set('merit', e.target.value)}
+              />
             </label>
             <label>
               Demerit
               <textarea
+                data-testid="demerit"
                 rows={3}
                 value={form.demerit}
                 onChange={(e) => set('demerit', e.target.value)}
@@ -312,6 +339,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               Material Disposition
               <textarea
+                data-testid="material-disposition"
                 rows={3}
                 value={form.materialDisposition}
                 onChange={(e) => set('materialDisposition', e.target.value)}
@@ -320,6 +348,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               Sample Quantity (numbers only)
               <input
+                data-testid="sample-quantity"
                 inputMode="numeric"
                 pattern="[0-9]*"
                 value={form.sampleQuantity}
@@ -333,6 +362,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               Identification of Test Lot (Code / Serial)
               <input
+                data-testid="test-lot-code"
                 value={form.testLotCodeSerial}
                 onChange={(e) => set('testLotCodeSerial', e.target.value)}
               />
@@ -340,6 +370,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               Test Lot Type
               <select
+                data-testid="test-lot-type"
                 value={form.testLotType}
                 onChange={(e) =>
                   set('testLotType', e.target.value === '' ? '' : Number(e.target.value))
@@ -356,6 +387,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label className="span-2">
               Test Lot Description
               <textarea
+                data-testid="test-lot-description"
                 rows={2}
                 value={form.testLotDescription}
                 onChange={(e) => set('testLotDescription', e.target.value)}
@@ -368,6 +400,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
           <legend>Chemical / Materials</legend>
           <label className="check">
             <input
+              data-testid="chemical-applicable"
               type="checkbox"
               checked={form.applicableToChemicalOrMaterials}
               onChange={(e) => set('applicableToChemicalOrMaterials', e.target.checked)}
@@ -379,6 +412,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
               <label>
                 Safety Data Sheet
                 <input
+                  data-testid="safety-data-sheet"
                   value={form.safetyDataSheet}
                   onChange={(e) => set('safetyDataSheet', e.target.value)}
                 />
@@ -386,6 +420,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
               <label>
                 Chemical Label
                 <input
+                  data-testid="chemical-label"
                   value={form.chemicalLabel}
                   onChange={(e) => set('chemicalLabel', e.target.value)}
                 />
@@ -393,6 +428,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
               <label>
                 Chemical Classification and Chemical
                 <input
+                  data-testid="chemical-classification"
                   value={form.chemicalClassification}
                   onChange={(e) => set('chemicalClassification', e.target.value)}
                 />
@@ -400,6 +436,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
               <label>
                 Chemical Inventory Management System (CIMS)
                 <input
+                  data-testid="cims"
                   value={form.chemicalInventorySystem}
                   onChange={(e) => set('chemicalInventorySystem', e.target.value)}
                 />
@@ -433,6 +470,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               Verified By (Safety)
               <select
+                data-testid="verified-by-safety"
                 value={form.verifiedBySafetyUserId}
                 onChange={(e) =>
                   set(
@@ -452,6 +490,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               Checked By (Dept Head)
               <select
+                data-testid="checked-by-dept"
                 value={form.checkedByDeptHeadUserId}
                 onChange={(e) =>
                   set(
@@ -471,6 +510,7 @@ export default function ErFormPage({ mode }: { mode: 'create' | 'edit' }) {
             <label>
               Checked By (QA)
               <select
+                data-testid="checked-by-qa"
                 value={form.checkedByQaUserId}
                 onChange={(e) =>
                   set('checkedByQaUserId', e.target.value === '' ? '' : Number(e.target.value))
