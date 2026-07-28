@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+*.user
+*.db
+*.db-shm
+*.db-wal
+uploads/
+**/node_modules/
+client/dist/
+*.log
+.DS_Store
