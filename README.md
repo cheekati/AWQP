@@ -90,7 +90,8 @@ Password for all: `Password123!`
 ## Project layout
 
 ```
-docker-compose.yml              # SQL Server 2022
-backend/ChangeManagement.Api/   # API, domain, EF Core (SQL Server), uploads
-frontend/                       # React UI
+docker-compose.yml                 # SQL Server–compatible DB (Azure SQL Edge)
+backend/ChangeManagement.Api/      # .NET 8 API + EF Core SQL Server + uploads
+  Data/Migrations/                 # EF Core migrations for SQL Server
+frontend/                          # React + Vite UI
 ```
