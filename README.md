@@ -4,21 +4,52 @@ ASP.NET Core 8 Web API + React (Vite/TypeScript) for Engineering Requests (ER): 
 
 ## Stack
 
-- **Backend:** .NET 8, EF Core + SQLite, JWT auth, Swagger
-- **Frontend:** React 19, React Router, Axios, Vite
+| Layer | Technology | Version |
+|---|---|---|
+| Backend | ASP.NET Core / .NET | 8.0 |
+| ORM | Entity Framework Core | 8.0.11 |
+| Database | **Microsoft SQL Server** | SQL Server–compatible (local Docker: Azure SQL Edge; production: SQL Server 2019/2022) |
+| Auth | JWT Bearer | 8.0.11 |
+| API docs | Swashbuckle (Swagger) | 6.9.0 |
+| Frontend | React | 19.x |
+| Routing | React Router DOM | 7.x |
+| HTTP client | Axios | 1.x |
+| Build tool | Vite | 8.x |
+| Language (UI) | TypeScript | 6.x |
 
 ## Quick start
 
-### API
+### 1. Start SQL Server (Docker)
+
+```bash
+docker compose up -d
+# or:
+docker run -d --name cms-sqlserver \
+  -e 'ACCEPT_EULA=Y' \
+  -e 'MSSQL_SA_PASSWORD=Your_strong_Password123' \
+  -p 1433:1433 \
+  mcr.microsoft.com/azure-sql-edge:latest
+```
+
+`docker-compose.yml` uses **Azure SQL Edge** (SQL Server wire-compatible) for local development. Point the connection string at full **SQL Server 2019/2022** in production.
+
+Default connection (see `appsettings.json`):
+
+```
+Server=localhost,1433;Database=ChangeManagement;User Id=sa;Password=Your_strong_Password123;TrustServerCertificate=True;Encrypt=False
+```
+
+### 2. API
 
 ```bash
 cd backend/ChangeManagement.Api
+dotnet ef database update   # applies migrations (also auto-runs on startup)
 dotnet run --urls http://localhost:5080
 ```
 
 Swagger: http://localhost:5080/swagger
 
-### Frontend
+### 3. Frontend
 
 ```bash
 cd frontend
@@ -59,6 +90,7 @@ Password for all: `Password123!`
 ## Project layout
 
 ```
-backend/ChangeManagement.Api/   # API, domain, EF Core, uploads
+docker-compose.yml              # SQL Server 2022
+backend/ChangeManagement.Api/   # API, domain, EF Core (SQL Server), uploads
 frontend/                       # React UI
 ```

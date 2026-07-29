@@ -4,6 +4,7 @@
 **/*.db
 **/*.db-shm
 **/*.db-wal
+**/appsettings.*.local.json
 backend/ChangeManagement.Api/wwwroot/uploads/*
 !backend/ChangeManagement.Api/wwwroot/uploads/.gitkeep
 

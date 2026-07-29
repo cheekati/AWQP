@@ -34,8 +34,11 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+var connectionString = builder.Configuration.GetConnectionString("Default")
+    ?? "Server=localhost,1433;Database=ChangeManagement;User Id=sa;Password=Your_strong_Password123;TrustServerCertificate=True;Encrypt=False";
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=changemanagement.db"));
+    options.UseSqlServer(connectionString));
 
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "ChangeManagementDevSecretKey_AtLeast32Chars!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -81,8 +84,24 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
-    await DbSeeder.SeedAsync(db);
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+
+    // SQL Server may still be warming up when the API starts.
+    for (var attempt = 1; attempt <= 30; attempt++)
+    {
+        try
+        {
+            await db.Database.MigrateAsync();
+            await DbSeeder.SeedAsync(db);
+            logger.LogInformation("SQL Server database ready.");
+            break;
+        }
+        catch (Exception ex) when (attempt < 30)
+        {
+            logger.LogWarning(ex, "Waiting for SQL Server (attempt {Attempt}/30)...", attempt);
+            await Task.Delay(TimeSpan.FromSeconds(2));
+        }
+    }
 }
 
 if (app.Environment.IsDevelopment())
