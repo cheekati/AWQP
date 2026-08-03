@@ -1,0 +1,57 @@
+trigger:
+  branches:
+    include:
+      - main
+      - cursor/*
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: Release
+
+stages:
+- stage: Build
+  jobs:
+  - job: BuildAndValidate
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        packageType: sdk
+        version: 8.0.x
+    - script: dotnet restore AWQP.sln
+      displayName: Restore
+    - script: dotnet build AWQP.sln --configuration $(buildConfiguration) --no-restore
+      displayName: Build
+    - script: dotnet test AWQP.sln --configuration $(buildConfiguration) --no-build --logger trx
+      displayName: Test
+      continueOnError: true
+    - task: Docker@2
+      displayName: Build API image
+      inputs:
+        command: build
+        Dockerfile: Dockerfile.api
+        buildContext: .
+        tags: awqp-api:$(Build.BuildId)
+    - task: Docker@2
+      displayName: Build Web image
+      inputs:
+        command: build
+        Dockerfile: Dockerfile.web
+        buildContext: .
+        tags: awqp-web:$(Build.BuildId)
+    - publish: database
+      artifact: sql-scripts
+
+- stage: Deploy
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: DeployProduction
+    environment: awqp-production
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "Deploy containers and SQL scripts through approved release tasks."
+            displayName: Deployment placeholder

@@ -1,0 +1,113 @@
+@{
+    ViewData["Title"] = "PPE Inventory";
+}
+<partial name="_PpeNav" />
+<section class="hero-panel mb-4">
+    <p class="text-uppercase text-muted mb-1">MARUWA EHS System</p>
+    <h1 class="display-6 fw-bold mb-0">PPE Inventory</h1>
+</section>
+
+<div id="alert-box"></div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header fw-semibold">Add Stock</div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <label class="form-label">Item Name *</label>
+                    <select class="form-select" id="inv-item" required><option value="">-- Select item --</option></select>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Existing Quantity</label>
+                    <input class="form-control bg-light" id="inv-existing" readonly value="0" />
+                    <div class="form-text">Read-only — current balance on hand.</div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Add New Quantity *</label>
+                    <input type="number" min="1" class="form-control" id="inv-newqty" required />
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Remarks</label>
+                    <input class="form-control" id="inv-remarks" />
+                </div>
+                <div class="text-danger small mb-2" id="form-error"></div>
+                <button class="btn btn-primary w-100" id="btn-add-stock">Add Quantity</button>
+            </div>
+        </div>
+        <div class="card mt-3">
+            <div class="card-header fw-semibold">Current Stock</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light"><tr><th>Item</th><th class="text-end">Existing Qty</th></tr></thead>
+                    <tbody id="inv-summary"><tr><td colspan="2" class="text-center text-muted py-3">Loading…</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header fw-semibold">Stock Entry History</div>
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light"><tr><th>Item</th><th class="text-end">Added Qty</th><th>Remarks</th><th>Date</th></tr></thead>
+                    <tbody id="entries-grid"><tr><td colspan="4" class="text-center text-muted py-4">Loading…</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>window.PPE_CONFIG = { apiBase: '@ViewBag.ApiBaseUrl', token: '@ViewBag.ApiToken' };</script>
+    <script src="~/js/ppe.js"></script>
+    <script>
+        (function () {
+            let inventory = [];
+
+            function alertMsg(msg, ok) {
+                $('#alert-box').html('<div class="alert alert-' + (ok ? 'success' : 'danger') + ' alert-dismissible">' + PPE.escapeHtml(msg) + '<button class="btn-close" data-bs-dismiss="alert"></button></div>');
+            }
+
+            function loadInventory() {
+                PPE.api('/api/ehs/inventory').done(function (rows) {
+                    inventory = rows;
+                    $('#inv-item').html('<option value="">-- Select item --</option>' + rows.map(function (r) {
+                        return '<option value="' + r.ppeItemId + '" data-existing="' + r.existingQuantity + '">' + PPE.escapeHtml(r.itemName) + ' (' + PPE.escapeHtml(r.itemCode) + ')</option>';
+                    }).join(''));
+                    $('#inv-summary').html(rows.length ? rows.map(function (r) {
+                        return '<tr><td>' + PPE.escapeHtml(r.itemName) + '</td><td class="text-end"><strong>' + r.existingQuantity + '</strong></td></tr>';
+                    }).join('') : '<tr><td colspan="2" class="text-center text-muted py-3">No items.</td></tr>');
+                    // keep the read-only existing quantity in sync with current selection
+                    $('#inv-item').trigger('change');
+                });
+            }
+
+            function loadEntries() {
+                PPE.api('/api/ehs/inventory/entries').done(function (rows) {
+                    $('#entries-grid').html(rows.length ? rows.map(function (r) {
+                        return '<tr><td>' + PPE.escapeHtml(r.itemName) + '</td><td class="text-end">' + r.addedQuantity + '</td><td>' + PPE.escapeHtml(r.remarks || '') + '</td><td>' + new Date(r.entryDateUtc).toLocaleString() + '</td></tr>';
+                    }).join('') : '<tr><td colspan="4" class="text-center text-muted py-4">No stock entries yet.</td></tr>');
+                });
+            }
+
+            $('#inv-item').on('change', function () {
+                const opt = this.options[this.selectedIndex];
+                $('#inv-existing').val(opt && opt.value ? (opt.getAttribute('data-existing') || '0') : '0');
+            });
+
+            $('#btn-add-stock').on('click', function () {
+                $('#form-error').text('');
+                const itemId = $('#inv-item').val();
+                const qty = parseInt($('#inv-newqty').val(), 10);
+                if (!itemId || !(qty > 0)) { $('#form-error').text('Item and a positive new quantity are mandatory.'); return; }
+                PPE.api('/api/ehs/inventory', 'POST', { ppeItemId: itemId, addedQuantity: qty, remarks: $('#inv-remarks').val().trim() || null })
+                    .done(function () { alertMsg('Stock added.', true); $('#inv-newqty').val(''); $('#inv-remarks').val(''); loadInventory(); loadEntries(); })
+                    .fail(function (xhr) { $('#form-error').text(PPE.errorText(xhr)); });
+            });
+
+            loadInventory();
+            loadEntries();
+        })();
+    </script>
+}

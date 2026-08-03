@@ -1,0 +1,100 @@
+@{
+    ViewData["Title"] = "PPE Issue";
+}
+<partial name="_PpeNav" />
+<section class="hero-panel mb-4">
+    <p class="text-uppercase text-muted mb-1">MARUWA EHS System</p>
+    <h1 class="display-6 fw-bold mb-0">PPE Issue</h1>
+</section>
+
+<div id="alert-box"></div>
+
+<div class="card">
+    <div class="card-header fw-semibold">Issued PPE</div>
+    <div class="card-body p-0">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr><th>Request #</th><th>Employee</th><th>Item</th><th class="text-end">Issued Qty</th><th>Issued By</th><th>Issued At</th><th></th></tr>
+            </thead>
+            <tbody id="issue-grid"><tr><td colspan="7" class="text-center text-muted py-4">Loading…</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- View popup -->
+<div class="modal fade" id="view-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Issue Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6 class="text-uppercase text-muted">Employee Details</h6>
+                <dl class="row mb-3">
+                    <dt class="col-sm-3">Employee No</dt><dd class="col-sm-3" id="v-empnum"></dd>
+                    <dt class="col-sm-3">Name</dt><dd class="col-sm-3" id="v-name"></dd>
+                    <dt class="col-sm-3">Department</dt><dd class="col-sm-3" id="v-dept"></dd>
+                    <dt class="col-sm-3">Designation</dt><dd class="col-sm-3" id="v-desig"></dd>
+                    <dt class="col-sm-3">Item</dt><dd class="col-sm-3" id="v-item"></dd>
+                    <dt class="col-sm-3">Issued Qty</dt><dd class="col-sm-3" id="v-qty"></dd>
+                </dl>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted">Requester Signature</h6>
+                        <img id="v-reqsig" class="border rounded w-100 bg-white" style="height:140px;object-fit:contain" alt="requester signature" />
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-uppercase text-muted">Receiver Signature</h6>
+                        <img id="v-recsig" class="border rounded w-100 bg-white" style="height:140px;object-fit:contain" alt="receiver signature" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>window.PPE_CONFIG = { apiBase: '@ViewBag.ApiBaseUrl', token: '@ViewBag.ApiToken' };</script>
+    <script src="~/js/ppe.js"></script>
+    <script>
+        (function () {
+            const viewModal = new bootstrap.Modal(document.getElementById('view-modal'));
+            let issues = [];
+
+            function load() {
+                PPE.api('/api/ehs/ppe-issues').done(function (rows) {
+                    issues = rows;
+                    if (!rows.length) { $('#issue-grid').html('<tr><td colspan="7" class="text-center text-muted py-4">No PPE issued yet.</td></tr>'); return; }
+                    $('#issue-grid').html(rows.map(function (r, idx) {
+                        return '<tr>' +
+                            '<td><strong>' + PPE.escapeHtml(r.requestNumber) + '</strong></td>' +
+                            '<td>' + PPE.escapeHtml(r.employeeName) + '<br><small class="text-muted">' + PPE.escapeHtml(r.employeeNumber) + '</small></td>' +
+                            '<td>' + PPE.escapeHtml(r.itemName) + '</td>' +
+                            '<td class="text-end">' + r.issuedQuantity + '</td>' +
+                            '<td>' + PPE.escapeHtml(r.issuedBy) + '</td>' +
+                            '<td>' + new Date(r.issuedAtUtc).toLocaleString() + '</td>' +
+                            '<td class="text-end"><button class="btn btn-sm btn-outline-primary btn-view" data-idx="' + idx + '">View</button></td>' +
+                            '</tr>';
+                    }).join(''));
+                }).fail(function (xhr) { $('#issue-grid').html('<tr><td colspan="7" class="text-center text-danger py-4">' + PPE.escapeHtml(PPE.errorText(xhr)) + '</td></tr>'); });
+            }
+
+            $('#issue-grid').on('click', '.btn-view', function () {
+                const r = issues[$(this).data('idx')];
+                $('#v-empnum').text(r.employeeNumber);
+                $('#v-name').text(r.employeeName);
+                $('#v-dept').text(r.department);
+                $('#v-desig').text(r.designation);
+                $('#v-item').text(r.itemName);
+                $('#v-qty').text(r.issuedQuantity);
+                $('#v-reqsig').attr('src', r.requesterSignature || '');
+                $('#v-recsig').attr('src', r.receiverSignature || '');
+                viewModal.show();
+            });
+
+            load();
+        })();
+    </script>
+}

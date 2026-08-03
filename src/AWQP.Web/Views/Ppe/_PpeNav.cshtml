@@ -1,0 +1,10 @@
+@{
+    var current = ViewContext.RouteData.Values["action"]?.ToString();
+    string Active(string a) => string.Equals(current, a, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+}
+<ul class="nav nav-pills mb-3">
+    <li class="nav-item"><a class="nav-link @Active("Master")" asp-controller="Ppe" asp-action="Master">PPE Master</a></li>
+    <li class="nav-item"><a class="nav-link @Active("Request")" asp-controller="Ppe" asp-action="Request">PPE Request</a></li>
+    <li class="nav-item"><a class="nav-link @Active("Issue")" asp-controller="Ppe" asp-action="Issue">PPE Issue</a></li>
+    <li class="nav-item"><a class="nav-link @Active("Inventory")" asp-controller="Ppe" asp-action="Inventory">PPE Inventory</a></li>
+</ul>
