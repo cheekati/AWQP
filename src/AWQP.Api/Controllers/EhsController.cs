@@ -11,8 +11,13 @@ namespace AWQP.Api.Controllers;
 public sealed class EhsController : ControllerBase
 {
     private readonly IPpeService _ppeService;
+    private readonly IWorkPermitService _workPermitService;
 
-    public EhsController(IPpeService ppeService) => _ppeService = ppeService;
+    public EhsController(IPpeService ppeService, IWorkPermitService workPermitService)
+    {
+        _ppeService = ppeService;
+        _workPermitService = workPermitService;
+    }
 
     // --- Employees (PPE Request employee-number binding) ---
 
@@ -91,6 +96,37 @@ public sealed class EhsController : ControllerBase
     public async Task<IActionResult> AddStock(AddPpeStockRequest request, CancellationToken cancellationToken)
     {
         var result = await _ppeService.AddStockAsync(request, cancellationToken);
+        return result.Succeeded ? Ok(result.Value) : BadRequest(new { error = result.Error });
+    }
+
+    // --- Work Permit Supplier Progress (front page with daily atmospheric data + ranges) ---
+
+    [HttpGet("work-permits/acceptable-ranges")]
+    public async Task<IActionResult> AcceptableRanges(CancellationToken cancellationToken) =>
+        Ok(await _workPermitService.GetAcceptableRangesAsync(cancellationToken));
+
+    [HttpGet("work-permits/progress/{supplierCode}")]
+    public async Task<IActionResult> ProgressFrontPage(string supplierCode, CancellationToken cancellationToken) =>
+        Ok(await _workPermitService.GetProgressFrontPageAsync(supplierCode, cancellationToken));
+
+    [HttpGet("work-permits/{id:guid}")]
+    public async Task<IActionResult> WorkPermit(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _workPermitService.GetByIdAsync(id, cancellationToken);
+        return result.Succeeded ? Ok(result.Value) : NotFound(new { error = result.Error });
+    }
+
+    [HttpPut("work-permits/{id:guid}/progress")]
+    public async Task<IActionResult> UpdateProgress(Guid id, UpdateProgressWorkPermitRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _workPermitService.UpdateProgressAsync(id, request, cancellationToken);
+        return result.Succeeded ? Ok(result.Value) : BadRequest(new { error = result.Error });
+    }
+
+    [HttpPost("work-permits/{id:guid}/daily-readings")]
+    public async Task<IActionResult> AddDailyReading(Guid id, AddDailyAtmosphericReadingRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _workPermitService.AddDailyReadingAsync(id, request, cancellationToken);
         return result.Succeeded ? Ok(result.Value) : BadRequest(new { error = result.Error });
     }
 }

@@ -41,6 +41,23 @@ Apply database scripts in this order:
 2. `database/004_module_tables.sql`
 3. `database/002_seed_data.sql`
 4. `database/003_views_procedures_triggers.sql`
+5. `database/005_ehs_ppe.sql` (PPE module)
+6. `database/006_ehs_work_permit.sql` (Work Permit supplier progress + atmospheric ranges)
+
+### Work Permit Supplier Progress
+
+Front page route: `/progressworkorderSupplier`
+
+Displays all daily atmospheric testing readings for in-progress work permits, with acceptable ranges shown for each parameter:
+
+| Parameter | Acceptable range |
+| --- | --- |
+| Oxygen Content (O₂) | 19.5 – 23.5% |
+| Toxic Gas H₂S | ≤ 10 ppm |
+| Carbon Monoxide (CO) | ≤ 25 ppm |
+| Combustible Gas | ≤ 10% LEL |
+
+Seed supplier code: `SUP001`
 
 ## Documentation
 

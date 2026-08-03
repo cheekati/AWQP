@@ -1,0 +1,152 @@
+@{
+    ViewData["Title"] = "Work Permit In Progress (Supplier)";
+    var supplierCode = (string)(ViewBag.SupplierCode ?? "SUP001");
+}
+<section class="hero-panel mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+        <div>
+            <p class="text-uppercase text-muted mb-1">MARUWA EHS System</p>
+            <h1 class="display-6 fw-bold mb-1">Work Permit In Progress</h1>
+            <p class="mb-0 text-secondary">Supplier progress view — daily atmospheric testing data with acceptable ranges for each parameter.</p>
+        </div>
+        <div class="d-flex align-items-end gap-2">
+            <div>
+                <label class="form-label small mb-1" for="supplier-code">Supplier Code</label>
+                <input id="supplier-code" class="form-control" value="@supplierCode" style="min-width:140px" />
+            </div>
+            <button class="btn btn-primary" id="btn-reload">Load</button>
+        </div>
+    </div>
+</section>
+
+<div id="alert-box"></div>
+
+<!-- Acceptable ranges legend (always visible on front page) -->
+<div class="card range-legend mb-4">
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span>Acceptable Ranges — Atmospheric Testing Parameters</span>
+        <span class="badge text-bg-light text-dark">Hot Work / Confined Space (valid 1 day)</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-3" id="range-cards">
+            <div class="col-12 text-muted">Loading acceptable ranges…</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
+        <span>Work Permits — All Daily Atmospheric Data</span>
+        <input type="search" id="filter-text" class="form-control form-control-sm" style="max-width:260px" placeholder="Filter…" />
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 wp-grid">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width:48px"></th>
+                        <th>Permit No</th>
+                        <th>Status</th>
+                        <th>Work Type</th>
+                        <th>Department</th>
+                        <th>Plant Location</th>
+                        <th>Work Info</th>
+                        <th>Schedule</th>
+                        <th>PO / Cost</th>
+                        <th>Daily Readings</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="wp-grid">
+                    <tr><td colspan="11" class="text-center text-muted py-4">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Edit progress modal -->
+<div class="modal fade" id="edit-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Work Permit Progress</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="f-id" />
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Status *</label>
+                        <select id="f-status" class="form-select">
+                            <option>IN PROGRESS</option>
+                            <option>ON HOLD</option>
+                            <option>COMPLETED</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Invoice Number *</label>
+                        <input id="f-invoice" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">PO Number *</label>
+                        <input id="f-po" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Work Permit Cost *</label>
+                        <input id="f-cost" type="number" step="0.01" min="0" class="form-control" />
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">After Image Path (Supporting Document 6)</label>
+                        <input id="f-image" class="form-control" placeholder="WorkOrder/SupportingDocument6/…" />
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Invoice Document Path</label>
+                        <input id="f-upload" class="form-control" placeholder="WorkOrderDocument/Document1/…" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">In Progress Remarks</label>
+                        <textarea id="f-inprog" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">On Hold Remarks</label>
+                        <textarea id="f-hold" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Completed Remarks</label>
+                        <textarea id="f-comp" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <hr />
+                <h6 class="fw-semibold">Add Daily Atmospheric Reading</h6>
+                <p class="small text-muted mb-2">Ranges: O₂ 19.5–23.5% · H₂S ≤10 ppm · CO ≤25 ppm · Combustible ≤10% LEL</p>
+                <div class="row g-2">
+                    <div class="col-md-2"><label class="form-label small">Date</label><input type="date" id="r-date" class="form-control form-control-sm" /></div>
+                    <div class="col-md-2"><label class="form-label small">O₂ %</label><input type="number" step="0.01" id="r-o2" class="form-control form-control-sm" /></div>
+                    <div class="col-md-2"><label class="form-label small">H₂S ppm</label><input type="number" step="0.01" id="r-h2s" class="form-control form-control-sm" /></div>
+                    <div class="col-md-2"><label class="form-label small">CO ppm</label><input type="number" step="0.01" id="r-co" class="form-control form-control-sm" /></div>
+                    <div class="col-md-2"><label class="form-label small">LEL %</label><input type="number" step="0.01" id="r-lel" class="form-control form-control-sm" /></div>
+                    <div class="col-md-2"><label class="form-label small">PIC</label><input id="r-pic" class="form-control form-control-sm" /></div>
+                    <div class="col-md-10"><label class="form-label small">Remarks</label><input id="r-remarks" class="form-control form-control-sm" /></div>
+                    <div class="col-md-2 d-flex align-items-end"><button type="button" class="btn btn-outline-primary btn-sm w-100" id="btn-add-reading">Add Reading</button></div>
+                </div>
+                <div class="text-danger small mt-2" id="form-error"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button class="btn btn-primary" id="btn-save">Save Progress</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.WP_CONFIG = {
+            apiBase: '@ViewBag.ApiBaseUrl',
+            token: '@ViewBag.ApiToken',
+            supplierCode: '@supplierCode'
+        };
+    </script>
+    <script src="~/js/workpermit-progress.js"></script>
+}

@@ -5,3 +5,26 @@ body { background: #f5f7fb; }
 .metric-label { display: block; color: #6c757d; font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; }
 .workflow { display: flex; gap: .5rem; flex-wrap: wrap; }
 .workflow span { background: #eef4ff; color: #0b4aa2; border: 1px solid #cfe1ff; border-radius: 999px; padding: .55rem .9rem; font-weight: 600; }
+
+/* Work Permit Supplier Progress — daily atmospheric data */
+.range-legend { border: 1px solid #cfe0d4; border-radius: 1rem; overflow: hidden; }
+.range-legend .card-header { background: #e8f5ee; border-bottom: 1px solid #cfe0d4; }
+.range-card {
+    background: linear-gradient(180deg, #f7fbf8, #ffffff);
+    border: 1px solid #d7e8dd;
+    border-radius: .75rem;
+    padding: 1rem 1.1rem;
+}
+.range-code { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: #2f6b4f; font-weight: 700; }
+.range-name { font-weight: 600; margin-top: .15rem; }
+.range-value { font-size: 1.25rem; font-weight: 700; color: #14532d; margin: .35rem 0; }
+.wp-grid thead th { white-space: nowrap; font-size: .85rem; }
+.wp-detail-cell { background: #f8fafc; padding: 1rem 1.25rem !important; }
+.atm-daily th { font-size: .8rem; background: #eef2f7; white-space: nowrap; }
+.atm-daily .range-hint { color: #64748b; font-weight: 500; font-size: .75rem; }
+.atm-ok { background: #dcfce7 !important; color: #14532d; font-weight: 600; }
+.atm-bad { background: #fee2e2 !important; color: #991b1b; font-weight: 700; }
+.wp-status-inpro { background: #00008b; color: #fff; }
+.wp-status-onhold { background: #ff8c00; color: #fff; }
+.wp-status-comp { background: #2e8b57; color: #fff; }
+.wp-status-veri { background: #006400; color: #fff; }

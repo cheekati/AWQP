@@ -61,6 +61,9 @@ public sealed class ManufacturingDbContext : DbContext
     public DbSet<PpeRequest> PpeRequests => Set<PpeRequest>();
     public DbSet<PpeIssue> PpeIssues => Set<PpeIssue>();
     public DbSet<PpeStockEntry> PpeStockEntries => Set<PpeStockEntry>();
+    public DbSet<WorkPermit> WorkPermits => Set<WorkPermit>();
+    public DbSet<DailyAtmosphericReading> DailyAtmosphericReadings => Set<DailyAtmosphericReading>();
+    public DbSet<AtmosphericParameterRange> AtmosphericParameterRanges => Set<AtmosphericParameterRange>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -147,6 +150,9 @@ public sealed class ManufacturingDbContext : DbContext
         modelBuilder.Entity<PpeRequest>().ToTable("PpeRequests", "ehs");
         modelBuilder.Entity<PpeIssue>().ToTable("PpeIssues", "ehs");
         modelBuilder.Entity<PpeStockEntry>().ToTable("PpeStockEntries", "ehs");
+        modelBuilder.Entity<WorkPermit>().ToTable("WorkPermits", "ehs");
+        modelBuilder.Entity<DailyAtmosphericReading>().ToTable("DailyAtmosphericReadings", "ehs");
+        modelBuilder.Entity<AtmosphericParameterRange>().ToTable("AtmosphericParameterRanges", "ehs");
     }
 
     private static System.Linq.Expressions.LambdaExpression ConvertFilterExpression(Type entityType)
