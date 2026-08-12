@@ -1,0 +1,32 @@
+.checksheet-grid-wrap {
+    max-height: 70vh;
+    overflow: auto;
+}
+
+.checksheet-grid th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    white-space: nowrap;
+    font-size: 0.85rem;
+}
+
+.checksheet-grid td {
+    font-size: 0.85rem;
+    vertical-align: top;
+}
+
+.image-slot {
+    width: 72px;
+}
+
+.image-slot img {
+    object-fit: cover;
+}
+
+.hero-panel {
+    background: linear-gradient(135deg, #f0f6fb 0%, #ffffff 55%, #eef5f0 100%);
+    border: 1px solid #d9e3ec;
+    border-radius: 0.5rem;
+    padding: 1.25rem 1.5rem;
+}

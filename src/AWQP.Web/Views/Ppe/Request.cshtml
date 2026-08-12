@@ -1,0 +1,199 @@
+@{
+    ViewData["Title"] = "PPE Request";
+}
+<partial name="_PpeNav" />
+<section class="hero-panel mb-4">
+    <p class="text-uppercase text-muted mb-1">MARUWA EHS System</p>
+    <h1 class="display-6 fw-bold mb-0">PPE Request</h1>
+</section>
+
+<div id="alert-box"></div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header fw-semibold">New Request</div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <label class="form-label">Employee Number *</label>
+                    <div class="input-group">
+                        <input class="form-control" id="r-empnum" placeholder="e.g. EMP-1002" required />
+                        <button class="btn btn-outline-secondary" id="btn-bind">Bind</button>
+                    </div>
+                    <div class="form-text" id="emp-status"></div>
+                </div>
+                <div class="row">
+                    <div class="col mb-2"><label class="form-label">Employee Name</label><input class="form-control" id="r-empname" readonly /></div>
+                    <div class="col mb-2"><label class="form-label">Department</label><input class="form-control" id="r-dept" readonly /></div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">PPE Item *</label>
+                    <select class="form-select" id="r-item" required><option value="">-- Select PPE item --</option></select>
+                </div>
+                <div class="row">
+                    <div class="col mb-2"><label class="form-label">Quantity *</label><input type="number" min="1" class="form-control" id="r-qty" required /></div>
+                    <div class="col mb-2"><label class="form-label">Unit Price *</label><input type="number" min="0.01" step="0.01" class="form-control" id="r-price" required /></div>
+                    <div class="col mb-2"><label class="form-label">Balance Qty</label><input class="form-control bg-light" id="r-balance" readonly /></div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label d-flex justify-content-between">Requester Signature *
+                        <a href="#" class="small" id="r-clear-sig">clear</a></label>
+                    <canvas id="r-sig" width="360" height="120" class="border rounded w-100" style="touch-action:none;background:#fff"></canvas>
+                </div>
+                <div class="text-danger small mb-2" id="form-error"></div>
+                <button class="btn btn-primary w-100" id="btn-save-req">Save Request</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header fw-semibold">PPE Requests</div>
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th>Request #</th><th>Employee</th><th>Item</th><th class="text-end">Qty</th><th class="text-end">Total</th><th class="text-end">Balance</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody id="req-grid"><tr><td colspan="8" class="text-center text-muted py-4">Loading…</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Issue popup (receiver digital signature) -->
+<div class="modal fade" id="issue-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Issue PPE — Receiver Signature</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="i-reqid" />
+                <p class="mb-1" id="i-summary"></p>
+                <div class="mb-2"><label class="form-label">Issued Quantity *</label><input type="number" min="1" class="form-control" id="i-qty" required /></div>
+                <label class="form-label d-flex justify-content-between">Receiver Signature *<a href="#" class="small" id="i-clear-sig">clear</a></label>
+                <canvas id="i-sig" width="430" height="140" class="border rounded w-100" style="touch-action:none;background:#fff"></canvas>
+                <div class="text-danger small mt-2" id="issue-error"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-success" id="btn-confirm-issue">Confirm Issue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>window.PPE_CONFIG = { apiBase: '@ViewBag.ApiBaseUrl', token: '@ViewBag.ApiToken' };</script>
+    <script src="~/js/ppe.js"></script>
+    <script>
+        (function () {
+            const issueModal = new bootstrap.Modal(document.getElementById('issue-modal'));
+            const reqSig = PPE.signaturePad(document.getElementById('r-sig'));
+            const issueSig = PPE.signaturePad(document.getElementById('i-sig'));
+            let items = [];
+            let boundEmployee = null;
+
+            function alertMsg(msg, ok) {
+                $('#alert-box').html('<div class="alert alert-' + (ok ? 'success' : 'danger') + ' alert-dismissible">' + PPE.escapeHtml(msg) + '<button class="btn-close" data-bs-dismiss="alert"></button></div>');
+            }
+
+            function loadItems() {
+                PPE.api('/api/ehs/ppe-items').done(function (rows) {
+                    items = rows;
+                    $('#r-item').html('<option value="">-- Select PPE item --</option>' + rows.map(function (r) {
+                        return '<option value="' + r.id + '" data-price="' + r.price + '" data-balance="' + r.existingQuantity + '">' + PPE.escapeHtml(r.name) + ' (' + PPE.escapeHtml(r.itemCode) + ')</option>';
+                    }).join(''));
+                });
+            }
+
+            function bindEmployee() {
+                const num = $('#r-empnum').val().trim();
+                if (!num) { $('#emp-status').text('Enter an employee number.').css('color', '#b02a37'); return; }
+                // Binds on the FIRST attempt for a given employee number.
+                PPE.api('/api/ehs/employees/' + encodeURIComponent(num)).done(function (emp) {
+                    boundEmployee = emp;
+                    $('#r-empname').val(emp.fullName);
+                    $('#r-dept').val(emp.department);
+                    $('#emp-status').text('Bound: ' + emp.fullName + ' • ' + emp.designation).css('color', '#198754');
+                }).fail(function (xhr) {
+                    boundEmployee = null; $('#r-empname').val(''); $('#r-dept').val('');
+                    $('#emp-status').text(PPE.errorText(xhr)).css('color', '#b02a37');
+                });
+            }
+
+            $('#btn-bind').on('click', bindEmployee);
+            $('#r-empnum').on('change blur', bindEmployee);
+
+            $('#r-item').on('change', function () {
+                const opt = this.options[this.selectedIndex];
+                $('#r-price').val(opt.getAttribute('data-price') || '');
+                $('#r-balance').val(opt.getAttribute('data-balance') || '0');
+            });
+
+            $('#r-clear-sig').on('click', function (e) { e.preventDefault(); reqSig.clear(); });
+
+            $('#btn-save-req').on('click', function () {
+                $('#form-error').text('');
+                const empnum = $('#r-empnum').val().trim();
+                const itemId = $('#r-item').val();
+                const qty = parseInt($('#r-qty').val(), 10);
+                const price = parseFloat($('#r-price').val());
+                if (!empnum || !itemId || !(qty > 0) || !(price > 0)) { $('#form-error').text('All fields are mandatory.'); return; }
+                if (reqSig.isEmpty()) { $('#form-error').text('Requester signature is mandatory.'); return; }
+                PPE.api('/api/ehs/ppe-requests', 'POST', {
+                    employeeNumber: empnum, ppeItemId: itemId, quantity: qty, unitPrice: price, requesterSignature: reqSig.toDataUrl()
+                }).done(function () {
+                    alertMsg('PPE request saved.', true);
+                    reqSig.clear(); $('#r-qty').val('');
+                    loadRequests(); loadItems();
+                }).fail(function (xhr) { $('#form-error').text(PPE.errorText(xhr)); });
+            });
+
+            function loadRequests() {
+                PPE.api('/api/ehs/ppe-requests').done(function (rows) {
+                    if (!rows.length) { $('#req-grid').html('<tr><td colspan="8" class="text-center text-muted py-4">No requests yet.</td></tr>'); return; }
+                    $('#req-grid').html(rows.map(function (r) {
+                        const badge = r.isIssued ? '<span class="badge bg-success">Issued</span>' : '<span class="badge bg-warning text-dark">Requested</span>';
+                        const action = r.isIssued ? '' :
+                            '<button class="btn btn-sm btn-success btn-issue" data-id="' + r.id + '" data-qty="' + r.quantity + '" data-item="' + PPE.escapeHtml(r.itemName) + '" data-emp="' + PPE.escapeHtml(r.employeeName) + '" data-balance="' + r.balanceQuantity + '">Issue</button>';
+                        return '<tr>' +
+                            '<td><strong>' + PPE.escapeHtml(r.requestNumber) + '</strong></td>' +
+                            '<td>' + PPE.escapeHtml(r.employeeName) + '<br><small class="text-muted">' + PPE.escapeHtml(r.employeeNumber) + '</small></td>' +
+                            '<td>' + PPE.escapeHtml(r.itemName) + '</td>' +
+                            '<td class="text-end">' + r.quantity + '</td>' +
+                            '<td class="text-end">' + PPE.money(r.totalPrice) + '</td>' +
+                            '<td class="text-end">' + r.balanceQuantity + '</td>' +
+                            '<td>' + badge + '</td>' +
+                            '<td class="text-end">' + action + '</td>' +
+                            '</tr>';
+                    }).join(''));
+                }).fail(function (xhr) { alertMsg(PPE.errorText(xhr), false); });
+            }
+
+            $('#req-grid').on('click', '.btn-issue', function () {
+                const d = $(this).data();
+                $('#i-reqid').val(d.id);
+                $('#i-qty').val(d.qty);
+                $('#i-summary').html('<strong>' + PPE.escapeHtml(d.emp) + '</strong> — ' + PPE.escapeHtml(d.item) + ' • Balance: ' + d.balance);
+                $('#issue-error').text(''); issueSig.clear(); issueModal.show();
+            });
+
+            $('#i-clear-sig').on('click', function (e) { e.preventDefault(); issueSig.clear(); });
+
+            $('#btn-confirm-issue').on('click', function () {
+                const id = $('#i-reqid').val();
+                const qty = parseInt($('#i-qty').val(), 10);
+                if (!(qty > 0)) { $('#issue-error').text('Issued quantity is mandatory.'); return; }
+                if (issueSig.isEmpty()) { $('#issue-error').text('Receiver signature is mandatory.'); return; }
+                PPE.api('/api/ehs/ppe-requests/' + id + '/issue', 'POST', { issuedQuantity: qty, receiverSignature: issueSig.toDataUrl() })
+                    .done(function () { issueModal.hide(); alertMsg('PPE issued and receiver signature captured.', true); loadRequests(); loadItems(); })
+                    .fail(function (xhr) { $('#issue-error').text(PPE.errorText(xhr)); });
+            });
+
+            loadItems();
+            loadRequests();
+        })();
+    </script>
+}

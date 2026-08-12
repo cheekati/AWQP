@@ -1,0 +1,322 @@
+@page "/checksheet"
+@rendermode InteractiveServer
+@inject CheckSheetApiClient Api
+@using AWQP.Application.DTOs
+
+<section class="hero-panel mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <p class="text-uppercase text-muted mb-1">MARUWA EHS System</p>
+        <h1 class="display-6 fw-bold mb-0">Check Point Master</h1>
+        <p class="text-muted mb-0">Manage check points and Minimum / Maximum Specs used by Items Sorting.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="/ckpage">Items Sorting</a>
+        <button class="btn btn-primary btn-lg" @onclick="OpenCreate">+ Add Check Point</button>
+    </div>
+</section>
+
+@if (!string.IsNullOrEmpty(_alert))
+{
+    <div class="alert alert-@(_alertOk ? "success" : "danger") alert-dismissible fade show" role="alert">
+        @_alert
+        <button type="button" class="btn-close" @onclick="() => _alert = null"></button>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header fw-semibold d-flex justify-content-between">
+        <span>Check Points</span>
+        <button class="btn btn-sm btn-outline-primary" @onclick="LoadAsync" disabled="@_loading">Refresh</button>
+    </div>
+    <div class="card-body p-0 table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Check Point</th>
+                    <th>Description</th>
+                    <th>Minimum Specs</th>
+                    <th>Maximum Specs</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (_loading)
+            {
+                <tr><td colspan="6" class="text-center text-muted py-4">Loading…</td></tr>
+            }
+            else if (_items.Count == 0)
+            {
+                <tr><td colspan="6" class="text-center text-muted py-4">No check points yet.</td></tr>
+            }
+            else
+            {
+                @foreach (var row in _items)
+                {
+                    <tr>
+                        <td><strong>@row.CheckPointName</strong></td>
+                        <td>@(row.Description ?? "—")</td>
+                        <td>@(string.IsNullOrWhiteSpace(row.MinimumSpecs) ? "—" : row.MinimumSpecs)</td>
+                        <td>@(string.IsNullOrWhiteSpace(row.MaximumSpecs) ? "—" : row.MaximumSpecs)</td>
+                        <td>
+                            @if (row.IsActive)
+                            {
+                                <span class="badge text-bg-success">Active</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-secondary">Inactive</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <button class="btn btn-sm btn-outline-info" @onclick="() => OpenSpecs(row)">Specs</button>
+                            <button class="btn btn-sm btn-outline-primary" @onclick="() => OpenEdit(row)">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteAsync(row)">Delete</button>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@if (_showEditModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(_editId is null ? "Add Check Point" : "Edit Check Point")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseEdit"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="form-label">Check Point *</label>
+                        <input class="form-control" @bind="_editName" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Description</label>
+                        <input class="form-control" @bind="_editDescription" />
+                    </div>
+                    <div class="row">
+                        <div class="col mb-2">
+                            <label class="form-label">Minimum Specs</label>
+                            <input class="form-control" @bind="_editMin" placeholder="e.g. 20°C" />
+                        </div>
+                        <div class="col mb-2">
+                            <label class="form-label">Maximum Specs</label>
+                            <input class="form-control" @bind="_editMax" placeholder="e.g. 30°C" />
+                        </div>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="cp-active" @bind="_editActive" />
+                        <label class="form-check-label" for="cp-active">Active</label>
+                    </div>
+                    @if (!string.IsNullOrEmpty(_formError))
+                    {
+                        <div class="text-danger small">@_formError</div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseEdit">Cancel</button>
+                    <button class="btn btn-primary" @onclick="SaveEditAsync" disabled="@_saving">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (_showSpecsModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.45)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Specs — @_specsName</h5>
+                    <button type="button" class="btn-close" @onclick="CloseSpecs"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">These values appear as read-only Specs Minimum / Specs Maximum in Items Sorting. Actual Specs is enabled only when at least one is set.</p>
+                    <div class="mb-2">
+                        <label class="form-label">Minimum Specs</label>
+                        <input class="form-control" @bind="_specsMin" placeholder="e.g. 20°C / 5 bar / 50%" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Maximum Specs</label>
+                        <input class="form-control" @bind="_specsMax" placeholder="e.g. 30°C / 10 bar / 80%" />
+                    </div>
+                    @if (!string.IsNullOrEmpty(_formError))
+                    {
+                        <div class="text-danger small">@_formError</div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseSpecs">Cancel</button>
+                    <button class="btn btn-primary" @onclick="SaveSpecsAsync" disabled="@_saving">Save Specs</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CheckPointMasterDto> _items = new();
+    private bool _loading = true;
+    private bool _saving;
+    private string? _alert;
+    private bool _alertOk;
+
+    private bool _showEditModal;
+    private Guid? _editId;
+    private string _editName = "";
+    private string _editDescription = "";
+    private string _editMin = "";
+    private string _editMax = "";
+    private bool _editActive = true;
+    private string? _formError;
+
+    private bool _showSpecsModal;
+    private Guid? _specsId;
+    private string _specsName = "";
+    private string _specsMin = "";
+    private string _specsMax = "";
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _items = await Api.ListCheckPointsAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowAlert(ex.Message, false);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OpenCreate()
+    {
+        _editId = null;
+        _editName = _editDescription = _editMin = _editMax = "";
+        _editActive = true;
+        _formError = null;
+        _showEditModal = true;
+    }
+
+    private void OpenEdit(CheckPointMasterDto row)
+    {
+        _editId = row.Id;
+        _editName = row.CheckPointName;
+        _editDescription = row.Description ?? "";
+        _editMin = row.MinimumSpecs ?? "";
+        _editMax = row.MaximumSpecs ?? "";
+        _editActive = row.IsActive;
+        _formError = null;
+        _showEditModal = true;
+    }
+
+    private void CloseEdit() => _showEditModal = false;
+
+    private async Task SaveEditAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editName))
+        {
+            _formError = "Check Point name is required.";
+            return;
+        }
+
+        _saving = true;
+        _formError = null;
+        try
+        {
+            if (_editId is null)
+            {
+                var result = await Api.CreateCheckPointAsync(new CreateCheckPointMasterRequest(
+                    _editName.Trim(), _editDescription, _editMin, _editMax, _editActive));
+                if (!result.Ok)
+                {
+                    _formError = result.Error;
+                    return;
+                }
+                ShowAlert("Check Point created.", true);
+            }
+            else
+            {
+                var result = await Api.UpdateCheckPointAsync(_editId.Value, new UpdateCheckPointMasterRequest(
+                    _editName.Trim(), _editDescription, _editMin, _editMax, _editActive));
+                if (!result.Ok)
+                {
+                    _formError = result.Error;
+                    return;
+                }
+                ShowAlert("Check Point updated.", true);
+            }
+            _showEditModal = false;
+            await LoadAsync();
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void OpenSpecs(CheckPointMasterDto row)
+    {
+        _specsId = row.Id;
+        _specsName = row.CheckPointName;
+        _specsMin = row.MinimumSpecs ?? "";
+        _specsMax = row.MaximumSpecs ?? "";
+        _formError = null;
+        _showSpecsModal = true;
+    }
+
+    private void CloseSpecs() => _showSpecsModal = false;
+
+    private async Task SaveSpecsAsync()
+    {
+        if (_specsId is null) return;
+        _saving = true;
+        _formError = null;
+        try
+        {
+            var result = await Api.UpdateSpecsAsync(_specsId.Value, new UpdateCheckPointSpecsRequest(_specsMin, _specsMax));
+            if (!result.Ok)
+            {
+                _formError = result.Error;
+                return;
+            }
+            ShowAlert($"Specs saved for {_specsName}.", true);
+            _showSpecsModal = false;
+            await LoadAsync();
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task DeleteAsync(CheckPointMasterDto row)
+    {
+        var result = await Api.DeleteCheckPointAsync(row.Id);
+        if (!result.Ok)
+        {
+            ShowAlert(result.Error ?? "Delete failed.", false);
+            return;
+        }
+        ShowAlert($"Deleted {row.CheckPointName}.", true);
+        await LoadAsync();
+    }
+
+    private void ShowAlert(string message, bool ok)
+    {
+        _alert = message;
+        _alertOk = ok;
+    }
+}

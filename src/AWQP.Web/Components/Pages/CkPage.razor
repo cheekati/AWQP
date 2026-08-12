@@ -1,0 +1,457 @@
+@page "/ckpage"
+@rendermode InteractiveServer
+@inject CheckSheetApiClient Api
+@inject CheckSheetUploadService Uploader
+@using AWQP.Application.DTOs
+@using Microsoft.AspNetCore.Components.Forms
+
+<section class="hero-panel mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+        <p class="text-uppercase text-muted mb-1">MARUWA EHS System</p>
+        <h1 class="display-6 fw-bold mb-0">CheckSheet Data</h1>
+        <p class="text-muted mb-0">Items Sorting — specs from Check Point Master, up to 4 images, score 0–10.</p>
+    </div>
+    <a class="btn btn-outline-secondary" href="/checksheet">Check Point Master</a>
+</section>
+
+@if (!string.IsNullOrEmpty(_alert))
+{
+    <div class="alert alert-@(_alertOk ? "success" : "danger") alert-dismissible fade show" role="alert">
+        <strong>@(_alertOk ? "Success!" : "Warning!")</strong> @_alert
+        <button type="button" class="btn-close" @onclick="() => _alert = null"></button>
+    </div>
+}
+
+<div class="card mb-3">
+    <div class="card-header fw-semibold">CheckSheet Data</div>
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Department</label>
+                <select class="form-select" @bind="_departmentCode" @bind:after="OnDepartmentChanged">
+                    <option value="">Select Department …</option>
+                    @foreach (var d in _departments)
+                    {
+                        <option value="@d.Code">@d.Name (@d.Code)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Section</label>
+                <select class="form-select" @bind="_sectionCode" @bind:after="OnSectionChanged" disabled="@string.IsNullOrEmpty(_departmentCode)">
+                    <option value="">Select Section …</option>
+                    @foreach (var s in _sections)
+                    {
+                        <option value="@s.Code">@s.Name (@s.Code)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">CheckSheet Name</label>
+                <select class="form-select" @bind="_machineName" @bind:after="OnMachineChanged" disabled="@string.IsNullOrEmpty(_sectionCode)">
+                    <option value="">Select CheckSheet Name …</option>
+                    @foreach (var m in _machines)
+                    {
+                        <option value="@m">@m</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Frequency</label>
+                <select class="form-select" @bind="_frequency" @bind:after="OnFrequencyChanged" disabled="@string.IsNullOrEmpty(_machineName)">
+                    <option value="">Select Frequency …</option>
+                    @foreach (var f in _frequencies)
+                    {
+                        <option value="@f">@f</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Date</label>
+                <input type="date" class="form-control" @bind="_checkingDate" @bind:after="LoadGridAsync"
+                       max="@DateTime.Now.ToString("yyyy-MM-dd")" disabled="@(!_dateEnabled)" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_rows is not null)
+{
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive checksheet-grid-wrap">
+                <table class="table table-sm table-bordered align-middle mb-0 checksheet-grid">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="min-width:50px">S. No.</th>
+                            <th style="min-width:160px">Items</th>
+                            <th style="min-width:160px">Check Point</th>
+                            <th style="min-width:140px">Before Remarks</th>
+                            <th style="min-width:100px">Specs Minimum</th>
+                            <th style="min-width:100px">Specs Maximum</th>
+                            <th style="min-width:110px">Actual Specs</th>
+                            <th style="min-width:140px">Remarks</th>
+                            <th style="min-width:220px">Image</th>
+                            <th style="min-width:170px">Priority</th>
+                            <th style="min-width:80px">Score</th>
+                            <th style="min-width:130px">ACTION</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (_rows.Count == 0)
+                    {
+                        <tr><td colspan="12" class="text-center text-muted py-4">No template items for this check sheet.</td></tr>
+                    }
+                    else
+                    {
+                        @for (var i = 0; i < _rows.Count; i++)
+                        {
+                            var idx = i;
+                            var row = _rows[idx];
+                            <tr>
+                                <td class="text-center">@row.SerialNo</td>
+                                <td>@row.Items</td>
+                                <td>@row.CheckPoint</td>
+                                <td>
+                                    <textarea class="form-control form-control-sm" rows="2" @bind="_rows[idx].BeforeRemarks" @bind:event="oninput"></textarea>
+                                </td>
+                                <td class="text-muted">@(string.IsNullOrWhiteSpace(row.SpecsMinimum) ? "—" : row.SpecsMinimum)</td>
+                                <td class="text-muted">@(string.IsNullOrWhiteSpace(row.SpecsMaximum) ? "—" : row.SpecsMaximum)</td>
+                                <td>
+                                    <input class="form-control form-control-sm"
+                                           value="@row.ActualSpecs"
+                                           disabled="@(!row.ActualSpecsEnabled)"
+                                           title="@(row.ActualSpecsEnabled ? "Enter measured value" : "Disabled — no specs configured for this check point")"
+                                           @onchange="e => _rows[idx].ActualSpecs = e.Value?.ToString()" />
+                                </td>
+                                <td>
+                                    <textarea class="form-control form-control-sm" rows="2" @bind="_rows[idx].Remarks" @bind:event="oninput"></textarea>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-wrap gap-1 align-items-start">
+                                        @for (var slot = 1; slot <= 4; slot++)
+                                        {
+                                            var s = slot;
+                                            var path = GetImage(row, s);
+                                            <div class="image-slot text-center">
+                                                @if (!string.IsNullOrWhiteSpace(path))
+                                                {
+                                                    <a href="@path" target="_blank" title="View image @s">
+                                                        <img src="@path" alt="Image @s" width="48" height="48" class="border rounded" />
+                                                    </a>
+                                                    <button type="button" class="btn btn-link btn-sm p-0 text-danger" @onclick="() => ClearImage(idx, s)">×</button>
+                                                }
+                                                else if (CountImages(row) < 4)
+                                                {
+                                                    <InputFile OnChange="e => OnImageSelected(e, idx, s)" accept=".jpg,.jpeg,.gif,.png,.webp"
+                                                               class="form-control form-control-sm" />
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="small text-muted">@CountImages(row)/4 images</div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn @(row.Priority == "Low" ? "btn-success" : "btn-outline-success")" @onclick='() => SetPriority(idx, "Low")'>Low</button>
+                                        <button type="button" class="btn @(row.Priority == "Medium" ? "btn-warning" : "btn-outline-warning")" @onclick='() => SetPriority(idx, "Medium")'>Medium</button>
+                                        <button type="button" class="btn @(row.Priority == "High" ? "btn-danger" : "btn-outline-danger")" @onclick='() => SetPriority(idx, "High")'>High</button>
+                                    </div>
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm"
+                                            value="@(_rows[idx].Score?.ToString() ?? "")"
+                                            @onchange="e => SetScore(idx, e.Value?.ToString())">
+                                        <option value="">—</option>
+                                        @for (var sc = 0; sc <= 10; sc++)
+                                        {
+                                            <option value="@sc">@sc</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn @(row.Status == "3" ? "btn-success" : "btn-outline-success")" @onclick='() => SaveActionAsync(idx, "3")'>3</button>
+                                        <button type="button" class="btn @(row.Status == "1" ? "btn-warning" : "btn-outline-warning")" @onclick='() => SaveActionAsync(idx, "1")'>1</button>
+                                        <button type="button" class="btn @(row.Status == "0" ? "btn-danger" : "btn-outline-danger")" @onclick='() => SaveActionAsync(idx, "0")'>0</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                    @if (_rows.Count > 0)
+                    {
+                        <tfoot>
+                            <tr class="table-light">
+                                <td colspan="10" class="text-end fw-semibold">Score Sum</td>
+                                <td class="fw-semibold text-center">@_rows.Sum(r => r.Score ?? 0)</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    }
+                </table>
+            </div>
+        </div>
+        <div class="card-footer d-flex justify-content-end">
+            <button class="btn btn-primary" @onclick="SubmitAsync">SUBMIT</button>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CheckSheetLookupDto> _departments = new();
+    private List<CheckSheetLookupDto> _sections = new();
+    private List<string> _machines = new();
+    private List<string> _frequencies = new();
+    private List<EditableRow>? _rows;
+
+    private string _departmentCode = "";
+    private string _sectionCode = "";
+    private string _machineName = "";
+    private string _frequency = "";
+    private DateTime _checkingDate = DateTime.Today;
+    private bool _dateEnabled;
+    private string? _alert;
+    private bool _alertOk;
+
+    private string DepartmentName => _departments.FirstOrDefault(d => d.Code == _departmentCode)?.Name ?? _departmentCode;
+    private string SectionName => _sections.FirstOrDefault(s => s.Code == _sectionCode)?.Name ?? _sectionCode;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _departments = await Api.ListDepartmentsAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowAlert(ex.Message, false);
+        }
+    }
+
+    private async Task OnDepartmentChanged()
+    {
+        _sectionCode = _machineName = _frequency = "";
+        _sections = new();
+        _machines = new();
+        _frequencies = new();
+        _rows = null;
+        _dateEnabled = false;
+        if (string.IsNullOrEmpty(_departmentCode)) return;
+        _sections = await Api.ListSectionsAsync(_departmentCode);
+    }
+
+    private async Task OnSectionChanged()
+    {
+        _machineName = _frequency = "";
+        _machines = new();
+        _frequencies = new();
+        _rows = null;
+        _dateEnabled = false;
+        if (string.IsNullOrEmpty(_sectionCode)) return;
+        _machines = await Api.ListMachinesAsync(_departmentCode, _sectionCode);
+    }
+
+    private async Task OnMachineChanged()
+    {
+        _frequency = "";
+        _frequencies = new();
+        _rows = null;
+        _dateEnabled = false;
+        if (string.IsNullOrEmpty(_machineName)) return;
+        _frequencies = await Api.ListFrequenciesAsync(_departmentCode, _sectionCode, _machineName);
+    }
+
+    private async Task OnFrequencyChanged()
+    {
+        _rows = null;
+        _dateEnabled = !string.IsNullOrEmpty(_frequency);
+        if (_dateEnabled)
+            await LoadGridAsync();
+    }
+
+    private async Task LoadGridAsync()
+    {
+        if (!_dateEnabled || string.IsNullOrEmpty(_frequency)) return;
+        try
+        {
+            var data = await Api.GetGridAsync(_departmentCode, _sectionCode, _machineName, _frequency, _checkingDate);
+            _rows = data.Select(EditableRow.FromDto).ToList();
+        }
+        catch (Exception ex)
+        {
+            ShowAlert(ex.Message, false);
+        }
+    }
+
+    private void SetPriority(int idx, string priority)
+    {
+        if (_rows is null) return;
+        _rows[idx].Priority = priority;
+    }
+
+    private void SetScore(int idx, string? value)
+    {
+        if (_rows is null) return;
+        _rows[idx].Score = int.TryParse(value, out var n) ? n : null;
+    }
+
+    private async Task SaveActionAsync(int idx, string status)
+    {
+        if (_rows is null) return;
+        var row = _rows[idx];
+        row.Status = status;
+
+        var request = new SaveCheckSheetRowRequest(
+            _departmentCode,
+            DepartmentName,
+            _sectionCode,
+            SectionName,
+            _machineName,
+            _frequency,
+            _checkingDate,
+            row.Items,
+            row.Standard,
+            row.CheckPoint,
+            row.Abnormality,
+            row.BeforeRemarks,
+            row.ActualSpecsEnabled ? row.ActualSpecs : null,
+            row.Remarks,
+            row.Image1,
+            row.Image1,
+            row.Image2,
+            row.Image3,
+            row.Image4,
+            row.Priority,
+            row.Status,
+            row.Score,
+            "web-user");
+
+        var result = await Api.SaveRowAsync(request);
+        if (!result.Ok)
+        {
+            ShowAlert(result.Error ?? "Save failed.", false);
+            return;
+        }
+
+        ShowAlert($"Check Sheet Details successfully saved on {DateTime.Now:dd-MMM-yyyy hh:mm:ss}", true);
+        await LoadGridAsync();
+    }
+
+    private async Task OnImageSelected(InputFileChangeEventArgs e, int rowIdx, int slot)
+    {
+        if (_rows is null) return;
+        var file = e.File;
+        if (file is null) return;
+        if (CountImages(_rows[rowIdx]) >= 4 && string.IsNullOrWhiteSpace(GetImage(_rows[rowIdx], slot)))
+        {
+            ShowAlert("Maximum 4 images allowed per check point.", false);
+            return;
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream(10_485_760);
+            var result = await Uploader.SaveAsync(stream, file.Name);
+            if (!result.Ok)
+            {
+                ShowAlert(result.Error ?? "Upload failed.", false);
+                return;
+            }
+            SetImage(_rows[rowIdx], slot, result.Path);
+        }
+        catch (Exception ex)
+        {
+            ShowAlert(ex.Message, false);
+        }
+    }
+
+    private void ClearImage(int idx, int slot)
+    {
+        if (_rows is null) return;
+        SetImage(_rows[idx], slot, null);
+    }
+
+    private static string? GetImage(EditableRow row, int slot) => slot switch
+    {
+        1 => row.Image1,
+        2 => row.Image2,
+        3 => row.Image3,
+        4 => row.Image4,
+        _ => null
+    };
+
+    private static void SetImage(EditableRow row, int slot, string? path)
+    {
+        switch (slot)
+        {
+            case 1: row.Image1 = path; break;
+            case 2: row.Image2 = path; break;
+            case 3: row.Image3 = path; break;
+            case 4: row.Image4 = path; break;
+        }
+    }
+
+    private static int CountImages(EditableRow row) =>
+        new[] { row.Image1, row.Image2, row.Image3, row.Image4 }.Count(p => !string.IsNullOrWhiteSpace(p));
+
+    private async Task SubmitAsync()
+    {
+        ShowAlert("Your Check Sheet Details are successfully closed", true);
+        await Task.Delay(400);
+        // Keep user on page in this module (original navigated to dashboard).
+    }
+
+    private void ShowAlert(string message, bool ok)
+    {
+        _alert = message;
+        _alertOk = ok;
+    }
+
+    private sealed class EditableRow
+    {
+        public Guid? Id { get; set; }
+        public int SerialNo { get; set; }
+        public string Items { get; set; } = "";
+        public string? Standard { get; set; }
+        public string CheckPoint { get; set; } = "";
+        public string? Abnormality { get; set; }
+        public string? BeforeRemarks { get; set; }
+        public string? SpecsMinimum { get; set; }
+        public string? SpecsMaximum { get; set; }
+        public string? ActualSpecs { get; set; }
+        public bool ActualSpecsEnabled { get; set; }
+        public string? Remarks { get; set; }
+        public string? Image1 { get; set; }
+        public string? Image2 { get; set; }
+        public string? Image3 { get; set; }
+        public string? Image4 { get; set; }
+        public string? Priority { get; set; }
+        public string? Status { get; set; }
+        public int? Score { get; set; }
+
+        public static EditableRow FromDto(CheckSheetGridRowDto d) => new()
+        {
+            Id = d.Id,
+            SerialNo = d.SerialNo,
+            Items = d.Items,
+            Standard = d.Standard,
+            CheckPoint = d.CheckPoint,
+            Abnormality = d.Abnormality,
+            BeforeRemarks = d.BeforeRemarks,
+            SpecsMinimum = d.SpecsMinimum,
+            SpecsMaximum = d.SpecsMaximum,
+            ActualSpecs = d.ActualSpecs,
+            ActualSpecsEnabled = d.ActualSpecsEnabled,
+            Remarks = d.Remarks,
+            Image1 = d.Image1 ?? d.Image,
+            Image2 = d.Image2,
+            Image3 = d.Image3,
+            Image4 = d.Image4,
+            Priority = d.Priority,
+            Status = d.Status,
+            Score = d.Score
+        };
+    }
+}
