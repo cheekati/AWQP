@@ -12,11 +12,13 @@ public sealed class EhsController : ControllerBase
 {
     private readonly IPpeService _ppeService;
     private readonly IWorkPermitService _workPermitService;
+    private readonly ICheckSheetService _checkSheetService;
 
-    public EhsController(IPpeService ppeService, IWorkPermitService workPermitService)
+    public EhsController(IPpeService ppeService, IWorkPermitService workPermitService, ICheckSheetService checkSheetService)
     {
         _ppeService = ppeService;
         _workPermitService = workPermitService;
+        _checkSheetService = checkSheetService;
     }
 
     // --- Employees (PPE Request employee-number binding) ---
@@ -127,6 +129,107 @@ public sealed class EhsController : ControllerBase
     public async Task<IActionResult> AddDailyReading(Guid id, AddDailyAtmosphericReadingRequest request, CancellationToken cancellationToken)
     {
         var result = await _workPermitService.AddDailyReadingAsync(id, request, cancellationToken);
+        return result.Succeeded ? Ok(result.Value) : BadRequest(new { error = result.Error });
+    }
+
+    // --- Check Point Master ---
+
+    [HttpGet("check-points")]
+    public async Task<IActionResult> CheckPoints(CancellationToken cancellationToken) =>
+        Ok(await _checkSheetService.ListCheckPointsAsync(cancellationToken));
+
+    [HttpGet("check-points/{id:guid}")]
+    public async Task<IActionResult> CheckPoint(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _checkSheetService.GetCheckPointAsync(id, cancellationToken);
+        return result.Succeeded ? Ok(result.Value) : NotFound(new { error = result.Error });
+    }
+
+    [HttpPost("check-points")]
+    public async Task<IActionResult> CreateCheckPoint(CreateCheckPointMasterRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _checkSheetService.CreateCheckPointAsync(request, cancellationToken);
+        return result.Succeeded ? Ok(result.Value) : BadRequest(new { error = result.Error });
+    }
+
+    [HttpPut("check-points/{id:guid}")]
+    public async Task<IActionResult> UpdateCheckPoint(Guid id, UpdateCheckPointMasterRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _checkSheetService.UpdateCheckPointAsync(id, request, cancellationToken);
+        return result.Succeeded ? Ok(result.Value) : BadRequest(new { error = result.Error });
+    }
+
+    [HttpPut("check-points/{id:guid}/specs")]
+    public async Task<IActionResult> UpdateCheckPointSpecs(Guid id, UpdateCheckPointSpecsRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _checkSheetService.UpdateCheckPointSpecsAsync(id, request, cancellationToken);
+        return result.Succeeded ? Ok(result.Value) : BadRequest(new { error = result.Error });
+    }
+
+    [HttpDelete("check-points/{id:guid}")]
+    public async Task<IActionResult> DeleteCheckPoint(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _checkSheetService.DeleteCheckPointAsync(id, cancellationToken);
+        return result.Succeeded ? Ok(new { deleted = true }) : BadRequest(new { error = result.Error });
+    }
+
+    // --- CheckSheet Items Sorting ---
+
+    [HttpGet("checksheets/departments")]
+    public async Task<IActionResult> CheckSheetDepartments(CancellationToken cancellationToken) =>
+        Ok(await _checkSheetService.ListDepartmentsAsync(cancellationToken));
+
+    [HttpGet("checksheets/sections")]
+    public async Task<IActionResult> CheckSheetSections([FromQuery] string departmentCode, CancellationToken cancellationToken) =>
+        Ok(await _checkSheetService.ListSectionsAsync(departmentCode, cancellationToken));
+
+    [HttpGet("checksheets/machines")]
+    public async Task<IActionResult> CheckSheetMachines([FromQuery] string departmentCode, [FromQuery] string sectionCode, CancellationToken cancellationToken) =>
+        Ok(await _checkSheetService.ListMachineNamesAsync(departmentCode, sectionCode, cancellationToken));
+
+    [HttpGet("checksheets/frequencies")]
+    public async Task<IActionResult> CheckSheetFrequencies(
+        [FromQuery] string departmentCode,
+        [FromQuery] string sectionCode,
+        [FromQuery] string machineName,
+        CancellationToken cancellationToken) =>
+        Ok(await _checkSheetService.ListFrequenciesAsync(departmentCode, sectionCode, machineName, cancellationToken));
+
+    [HttpGet("checksheets/definition")]
+    public async Task<IActionResult> CheckSheetDefinition(
+        [FromQuery] string departmentCode,
+        [FromQuery] string sectionCode,
+        [FromQuery] string machineName,
+        [FromQuery] string frequency,
+        CancellationToken cancellationToken)
+    {
+        var result = await _checkSheetService.GetDefinitionAsync(departmentCode, sectionCode, machineName, frequency, cancellationToken);
+        return result.Succeeded ? Ok(result.Value) : NotFound(new { error = result.Error });
+    }
+
+    [HttpGet("checksheets/grid")]
+    public async Task<IActionResult> CheckSheetGrid(
+        [FromQuery] string departmentCode,
+        [FromQuery] string sectionCode,
+        [FromQuery] string machineName,
+        [FromQuery] string frequency,
+        [FromQuery] DateTime checkingDate,
+        CancellationToken cancellationToken) =>
+        Ok(await _checkSheetService.GetGridAsync(departmentCode, sectionCode, machineName, frequency, checkingDate, cancellationToken));
+
+    [HttpGet("checksheets/dates")]
+    public async Task<IActionResult> CheckSheetDates(
+        [FromQuery] string departmentCode,
+        [FromQuery] string sectionCode,
+        [FromQuery] string machineName,
+        [FromQuery] string frequency,
+        CancellationToken cancellationToken) =>
+        Ok(await _checkSheetService.GetCheckedDatesAsync(departmentCode, sectionCode, machineName, frequency, cancellationToken));
+
+    [HttpPost("checksheets/rows")]
+    public async Task<IActionResult> SaveCheckSheetRow(SaveCheckSheetRowRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _checkSheetService.SaveRowAsync(request, cancellationToken);
         return result.Succeeded ? Ok(result.Value) : BadRequest(new { error = result.Error });
     }
 }

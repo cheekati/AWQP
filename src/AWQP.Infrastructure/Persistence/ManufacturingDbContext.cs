@@ -64,6 +64,10 @@ public sealed class ManufacturingDbContext : DbContext
     public DbSet<WorkPermit> WorkPermits => Set<WorkPermit>();
     public DbSet<DailyAtmosphericReading> DailyAtmosphericReadings => Set<DailyAtmosphericReading>();
     public DbSet<AtmosphericParameterRange> AtmosphericParameterRanges => Set<AtmosphericParameterRange>();
+    public DbSet<CheckPointMaster> CheckPointMasters => Set<CheckPointMaster>();
+    public DbSet<CheckSheetDefinition> CheckSheetDefinitions => Set<CheckSheetDefinition>();
+    public DbSet<CheckSheetTemplateItem> CheckSheetTemplateItems => Set<CheckSheetTemplateItem>();
+    public DbSet<CheckSheetData> CheckSheetData => Set<CheckSheetData>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -153,6 +157,10 @@ public sealed class ManufacturingDbContext : DbContext
         modelBuilder.Entity<WorkPermit>().ToTable("WorkPermits", "ehs");
         modelBuilder.Entity<DailyAtmosphericReading>().ToTable("DailyAtmosphericReadings", "ehs");
         modelBuilder.Entity<AtmosphericParameterRange>().ToTable("AtmosphericParameterRanges", "ehs");
+        modelBuilder.Entity<CheckPointMaster>().ToTable("CheckPointMasters", "ehs");
+        modelBuilder.Entity<CheckSheetDefinition>().ToTable("CheckSheetDefinitions", "ehs");
+        modelBuilder.Entity<CheckSheetTemplateItem>().ToTable("CheckSheetTemplateItems", "ehs");
+        modelBuilder.Entity<CheckSheetData>().ToTable("CheckSheetData", "ehs");
     }
 
     private static System.Linq.Expressions.LambdaExpression ConvertFilterExpression(Type entityType)

@@ -43,8 +43,16 @@ Apply database scripts in this order:
 4. `database/003_views_procedures_triggers.sql`
 5. `database/005_ehs_ppe.sql` (PPE module)
 6. `database/006_ehs_work_permit.sql` (Work Permit supplier progress + atmospheric ranges)
+7. `database/007_ehs_checkpoint_checksheet.sql` (Check Point Master + CheckSheet Items Sorting)
 
-### Work Permit Supplier Progress
+### Check Point Master / Items Sorting
+
+Blazor routes:
+
+- Check Point Master: `/checksheet` (`CheckSheet.razor`) — create/edit/delete check points and configure Minimum / Maximum Specs
+- Items Sorting: `/ckpage` (`CkPage.razor`) — Department → Section → CheckSheet Name → Frequency → Date grid with Before Remarks, Specs Min/Max (from master), Actual Specs, up to 4 images, Priority, Score 0–10, Action 3/1/0
+
+MVC redirects: `/CheckSheet` and `/CheckSheet/ItemsSorting`
 
 Front page route: `/progressworkorderSupplier`
 

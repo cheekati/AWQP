@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IPpeService, PpeService>();
         services.AddScoped<IWorkPermitService, WorkPermitService>();
+        services.AddScoped<ICheckSheetService, CheckSheetService>();
         services.AddSingleton<IBarcodeService, BarcodeService>();
         services.AddSingleton<IQrCodeService, QrCodeService>();
 
